@@ -525,7 +525,7 @@ abstract contract Ownable is Context {
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
     constructor () {
-        _owner = 0x2EB5AC2be5331715020E407a55cfa4b897d49372;
+        _owner = _msgSender();
         emit OwnershipTransferred(address(0), _owner);
     }
 
@@ -782,11 +782,11 @@ contract Nior is Context, IERC20, Ownable {
     mapping (address => bool) private _isExcluded;
     address[] private _excluded;
 
-    address private _holdPoolAddress = 0x22942aB9DD0F871d84AA3Cf5905D797314D15e65;
+    address private _holdPoolAddress = 0xF586B3842fce1c0D71c8c3369d442a3692620d28;
     address public _blackHoleAddress = 0x3737373737373737373737373737373737373737;
    
     uint256 private constant MAX = ~uint256(0);
-    uint256 private _tTotal = 1000000 * 10**6 * 10**9;
+    uint256 private _tTotal = 100000000 * 10**6 * 10**9;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     uint256 private _tFeeTotal;
 
@@ -802,6 +802,8 @@ contract Nior is Context, IERC20, Ownable {
     
     uint256 public _liquidityFee = 2;
     uint256 private _previousLiquidityFee = _liquidityFee;
+    
+    uint256 private _tBurnFee;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
@@ -809,7 +811,7 @@ contract Nior is Context, IERC20, Ownable {
     bool inSwapAndLiquify;
     bool public swapAndLiquifyEnabled = true;
     
-    uint256 public _maxTxAmount = 10000 * 10**6 * 10**9;
+    uint256 public _maxTxAmount = 1000000 * 10**6 * 10**9;
     uint256 private numTokensSellToAddToLiquidity = 500000 * 10**6 * 10**9;
     
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
@@ -1062,6 +1064,14 @@ contract Nior is Context, IERC20, Ownable {
             _tOwned[_holdPoolAddress] = _tOwned[_holdPoolAddress].add(tHoldFee);
     }
     
+    function _takeBurnFee(uint256 tBurnFee) private {
+        uint256 currentRate = _getRate();
+        uint256 _rBurn = tBurnFee.mul(currentRate);
+        _rOwned[_blackHoleAddress] = _rOwned[_blackHoleAddress].add(_rBurn);
+        if(_isExcluded[_blackHoleAddress])
+            _tOwned[_blackHoleAddress] = _tOwned[_blackHoleAddress].add(tBurnFee);
+    }
+    
     function calculateTaxFee(uint256 _amount) private view returns (uint256) {
         return _amount.mul(_taxFee).div(
             10**2
@@ -1103,11 +1113,24 @@ contract Nior is Context, IERC20, Ownable {
     }
 
     function _approve(address owner, address spender, uint256 amount) private {
-        require(owner != address(0), "ERC20: approve from the zero address");
-        require(spender != address(0), "ERC20: approve to the zero address");
+        require(owner != address(0), "BEP20: approve from the zero address");
+        require(spender != address(0), "BEP20: approve to the zero address");
 
         _allowances[owner][spender] = amount;
         emit Approval(owner, spender, amount);
+    }
+    
+    function _isMaxBalance(address account) private view returns(bool status) {
+        if(_isExcludedFromFee[account]) {
+            return false;
+        }
+        else {
+            if(balanceOf(account) > totalSupply().div(100).mul(5)) {
+                return true;
+            } 
+            else return false;
+        }
+        
     }
 
     function _transfer(
@@ -1115,8 +1138,9 @@ contract Nior is Context, IERC20, Ownable {
         address to,
         uint256 amount
     ) private {
-        require(from != address(0), "ERC20: transfer from the zero address");
-        require(to != address(0), "ERC20: transfer to the zero address");
+        require(from != address(0), "BEP20: transfer from the zero address");
+        require(to != address(0), "BEP20: transfer to the zero address");
+        require(!_isMaxBalance(to), "Whale Wallet Alert");
         require(amount > 0, "Transfer amount must be greater than zero");
         if(from != owner() && to != owner())
             require(amount <= _maxTxAmount, "Transfer amount exceeds the maxTxAmount.");
@@ -1150,6 +1174,11 @@ contract Nior is Context, IERC20, Ownable {
         //if any account belongs to _isExcludedFromFee account then remove the fee
         if(_isExcludedFromFee[from] || _isExcludedFromFee[to]){
             takeFee = false;
+        }
+        
+        if(takeFee) {
+            _tBurnFee = amount.div(100);
+            emit Transfer(from, _blackHoleAddress, _tBurnFee);
         }
         
         //transfer amount, it will take tax, burn, liquidity fee
@@ -1237,6 +1266,8 @@ contract Nior is Context, IERC20, Ownable {
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tHoldFee) = _getValues(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
         _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);
+        tTransferAmount = tTransferAmount.sub(_tBurnFee);
+        _takeBurnFee(_tBurnFee);
         _takeLiquidity(tLiquidity);
         _takeHoldFee(tHoldFee);
         _reflectFee(rFee, tFee);
@@ -1246,8 +1277,10 @@ contract Nior is Context, IERC20, Ownable {
     function _transferToExcluded(address sender, address recipient, uint256 tAmount) private {
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tHoldFee) = _getValues(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
+        tTransferAmount = tTransferAmount.sub(_tBurnFee);
         _tOwned[recipient] = _tOwned[recipient].add(tTransferAmount);
-        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount);           
+        _rOwned[recipient] = _rOwned[recipient].add(rTransferAmount); 
+        _takeBurnFee(_tBurnFee);
         _takeLiquidity(tLiquidity);
         _takeHoldFee(tHoldFee);
         _reflectFee(rFee, tFee);
@@ -1264,4 +1297,5 @@ contract Nior is Context, IERC20, Ownable {
         _reflectFee(rFee, tFee);
         emit Transfer(sender, recipient, tTransferAmount);
     }
+
 }
