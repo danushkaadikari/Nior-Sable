@@ -804,6 +804,7 @@ contract Nior is Context, IERC20, Ownable {
     uint256 private _previousLiquidityFee = _liquidityFee;
     
     uint256 private _tBurnFee;
+    uint256 public _tBurnTotal;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
     address public immutable uniswapV2Pair;
@@ -1065,9 +1066,6 @@ contract Nior is Context, IERC20, Ownable {
     }
     
     function _takeBurnFee(uint256 tBurnFee) private {
-        uint256 currentRate = _getRate();
-        uint256 _rBurn = tBurnFee.mul(currentRate);
-        _rOwned[_blackHoleAddress] = _rOwned[_blackHoleAddress].add(_rBurn);
         if(_isExcluded[_blackHoleAddress])
             _tOwned[_blackHoleAddress] = _tOwned[_blackHoleAddress].add(tBurnFee);
     }
@@ -1177,12 +1175,22 @@ contract Nior is Context, IERC20, Ownable {
         }
         
         if(takeFee) {
-            _tBurnFee = amount.div(100);
-            emit Transfer(from, _blackHoleAddress, _tBurnFee);
+            if(_tTotal > 1000 * 10**6 * 10**9) {
+                _tBurnFee = amount.div(100);
+                emit Transfer(from, _blackHoleAddress, _tBurnFee);
+                _burnBlackHole(_tBurnFee);
+            }
         }
         
         //transfer amount, it will take tax, burn, liquidity fee
         _tokenTransfer(from,to,amount,takeFee);
+    }
+    
+    function _burnBlackHole(uint256 tBurnFee) internal returns (bool status) {
+        //_tOwned[_blackHoleAddress] = _tOwned[_blackHoleAddress].sub(tBurnFee);
+        _tTotal = _tTotal.sub(tBurnFee);
+        emit Transfer(_blackHoleAddress, 0x0000000000000000000000000000000000000000, tBurnFee);
+        return true;
     }
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
