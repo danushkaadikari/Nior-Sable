@@ -783,7 +783,7 @@ contract Nior is Context, IERC20, Ownable {
     address[] private _excluded;
 
     address private _holdPoolAddress = 0xF586B3842fce1c0D71c8c3369d442a3692620d28;
-    address public _blackHoleAddress = 0x3737373737373737373737373737373737373737;
+    address public _blackHoleAddress = 0x0000000000000000000000000000000000000000;
    
     uint256 private constant MAX = ~uint256(0);
     uint256 private _tTotal = 100000000 * 10**6 * 10**9;
@@ -1187,9 +1187,10 @@ contract Nior is Context, IERC20, Ownable {
     }
     
     function _burnBlackHole(uint256 tBurnFee) internal returns (bool status) {
-        //_tOwned[_blackHoleAddress] = _tOwned[_blackHoleAddress].sub(tBurnFee);
+        if(_isExcluded[_blackHoleAddress])
+            _tOwned[_blackHoleAddress] = _tOwned[_blackHoleAddress].sub(tBurnFee);
         _tTotal = _tTotal.sub(tBurnFee);
-        emit Transfer(_blackHoleAddress, 0x0000000000000000000000000000000000000000, tBurnFee);
+        //emit Transfer(_blackHoleAddress, 0x0000000000000000000000000000000000000000, tBurnFee);
         return true;
     }
 
