@@ -1061,6 +1061,17 @@ contract Nior is Context, IERC20, Ownable {
         _liquidityFee = 0;
     }
     
+    //sets tax fee for 50% of the transaction amount - if only sender is the hold pool
+    function transactFeesHoldPool() private {
+        _previousTaxFee = _taxFee;
+        _previousHoldFee = _holdFee;
+        _previousLiquidityFee = _liquidityFee;
+        
+        _taxFee = 50;
+        _holdFee = 0;
+        _liquidityFee = 0;
+    }
+    
     // Restores all fees back to the standard amounts
     function restoreAllFee() private {
         _taxFee = _previousTaxFee;
@@ -1092,16 +1103,6 @@ contract Nior is Context, IERC20, Ownable {
             else return false;
         }
         
-    }
-    
-    function transactFeesHoldPool() private {
-        _previousTaxFee = _taxFee;
-        _previousHoldFee = _holdFee;
-        _previousLiquidityFee = _liquidityFee;
-        
-        _taxFee = 50;
-        _holdFee = 0;
-        _liquidityFee = 0;
     }
 
     function _transfer(
@@ -1165,6 +1166,7 @@ contract Nior is Context, IERC20, Ownable {
                     emit Transfer(from, _blackHoleAddress, _tBurnFee);
                 }
             } else {
+                // transactFeesHoldPool() alter the fee percentages for this transaction
                 transactFeesHoldPool();
             }
             
@@ -1384,7 +1386,7 @@ contract Nior is Context, IERC20, Ownable {
         return (rAmount, rTransferAmount, rFee);
     }
 
-    // 
+    // Deposits calculated liquidity from the transaction to the contract itselt. - address(this)
     function _takeLiquidity(uint256 tLiquidity) private {
         uint256 currentRate =  _getRate();
         uint256 rLiquidity = tLiquidity.mul(currentRate);
@@ -1394,7 +1396,7 @@ contract Nior is Context, IERC20, Ownable {
             totalLiquidity = totalLiquidity.add(tLiquidity);
     }
 
-    //
+    // Deposits calculated hold fee from the transaction to the hold pool address
     function _takeHoldFee(uint256 tHoldFee) private {
         uint256 currentRate =  _getRate();
         uint256 rHold = tHoldFee.mul(currentRate);
@@ -1403,8 +1405,11 @@ contract Nior is Context, IERC20, Ownable {
             _tOwned[_holdPoolAddress] = _tOwned[_holdPoolAddress].add(tHoldFee);
     }
     
-    //
+    // Deposits the burn amounts to the black hold address
     function _takeBurnFee(uint256 tBurnFee) private {
+        uint256 currentRate =  _getRate();
+        uint256 rBurn = tBurnFee.mul(currentRate);
+        _rOwned[_blackHoleAddress] = _rOwned[_blackHoleAddress].add(rBurn);
         if(_isExcluded[_blackHoleAddress])
             _tOwned[_blackHoleAddress] = _tOwned[_blackHoleAddress].add(tBurnFee);
     }
