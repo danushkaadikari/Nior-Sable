@@ -1155,7 +1155,7 @@ contract Nior is Context, IERC20, Ownable {
 
         // Burn tokens
         if(takeFee) {
-            
+            //execution occur if the transaction initiator is not the hold pool address
             if (from != _holdPoolAddress) {
                 // Stop burning tokens after we reach 1 billion tokens circulating supply
                 if(getCirculatingSupply() > 1000 * 10**6 * 10**9) {
