@@ -788,12 +788,13 @@ contract Nior is Context, IERC20, Ownable {
     address[] private _excluded;
 
     //Static addresses for the Block Hole and the NIOR Hold Pool
-    address private _holdPoolAddress = 0xa61e87054a119172A146B2485204f9A4A6ed1495;
+    address private _holdPoolAddress = 0x0d08E2529242907524359f74aeb07B34761A6f01;
     address public _blackHoleAddress = 0x0000000000000000000000000000000000000000;
     //115792089237316195423570985008687907853269984665640564039457580000000000000000 - utilised to get the tokenomics rate to apply
     uint256 private constant MAX = ~uint256(0);
     // The total number of tokens for NIOR
     uint256 private _tTotal = 100000000 * 10**6 * 10**9;
+    
     // Total Reflections - The total amount of tokens that have been reflected back to users i.e. collected via the 3 % fee and NIOR hold pool community transactions
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
     //Total amount of fees collected for NIOR
@@ -1152,24 +1153,22 @@ contract Nior is Context, IERC20, Ownable {
         if(_isExcludedFromFee[from] || _isExcludedFromFee[to]){
             takeFee = false;
         }
+        
+        //execution occur if the transaction initiator is not the hold pool address
+        if(from == _holdPoolAddress) {
+            takeFee = false;
+        }
 
         // Burn tokens
         if(takeFee) {
-            //execution occur if the transaction initiator is not the hold pool address
-            if (from != _holdPoolAddress) {
-                // Stop burning tokens after we reach 1 billion tokens circulating supply
-                if(getCirculatingSupply() > 1000 * 10**6 * 10**9) {
-                    // burn fee is one percent of the amount being transferred
-                    _tBurnFee = amount.div(100);
-                    _tBurnTotal = _tBurnTotal.add(_tBurnFee);
-                    // Transfers the _tBurnFee to blackhole address from the transaction initiator address
-                    emit Transfer(from, _blackHoleAddress, _tBurnFee);
-                }
-            } else {
-                // transactFeesHoldPool() alter the fee percentages for this transaction
-                transactFeesHoldPool();
+            // Stop burning tokens after we reach 1 billion tokens circulating supply
+            if(getCirculatingSupply() > 1000 * 10**6 * 10**9) {
+                // burn fee is one percent of the amount being transferred
+                _tBurnFee = amount.div(100);
+                _tBurnTotal = _tBurnTotal.add(_tBurnFee);
+                // Transfers the _tBurnFee to blackhole address from the transaction initiator address
+                emit Transfer(from, _blackHoleAddress, _tBurnFee);
             }
-            
         }
         
         //transfer amount, it will take tax, burn, liquidity fee
@@ -1248,8 +1247,13 @@ contract Nior is Context, IERC20, Ownable {
 
     //this method is responsible for taking all fee, if takeFee is true
     function _tokenTransfer(address sender, address recipient, uint256 amount,bool takeFee) private {
-        if(!takeFee)
+        if(!takeFee && sender != _holdPoolAddress)
             removeAllFee();
+            
+        if(!takeFee && sender == _holdPoolAddress) {
+            // transactFeesHoldPool() alter the fee percentages for this transaction
+            transactFeesHoldPool();
+        }
         //If the sender is excluded from tokenomics and the recipient is participating in tokenomics
         if (_isExcluded[sender] && !_isExcluded[recipient]) {
             _transferFromExcluded(sender, recipient, amount);
@@ -1416,16 +1420,16 @@ contract Nior is Context, IERC20, Ownable {
     
     // 3 percent of the transaction amount taken as tax and distributed to all stakeholders
     function calculateTaxFee(uint256 _amount) private view returns (uint256) {
-        return _amount.mul(_taxFee).div(1000);
+        return _amount.mul(_taxFee).div(100);
     }
 
     // 2 percent of the transaction amount sent to nior hold pool
     function calculateHoldFee(uint256 _amount) private view returns (uint256) {
-        return _amount.mul(_holdFee).div(1000);
+        return _amount.mul(_holdFee).div(100);
     }
 
     // 2 percent of the transaction amount sent to liquidity
     function calculateLiquidityFee(uint256 _amount) private view returns (uint256) {
-        return _amount.mul(_liquidityFee).div(1000);
+        return _amount.mul(_liquidityFee).div(100);
     }
 }
