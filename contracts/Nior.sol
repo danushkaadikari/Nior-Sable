@@ -1049,7 +1049,7 @@ contract Nior is Context, IERC20, Ownable {
      }
      
      
-   // Set all fee amounts to zero prior to transfers. Only if the transaction accounts are excluded from fees
+    // Set all fee amounts to zero prior to transfers. Only if the transaction accounts are excluded from fees
     function removeAllFee() private {
         if(_taxFee == 0 && _liquidityFee == 0) return;
         
@@ -1314,7 +1314,7 @@ contract Nior is Context, IERC20, Ownable {
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
-    //
+    // If the sender is excluded from tokenomics and the recipient is participating in tokenomics
     function _transferToExcluded(address sender, address recipient, uint256 tAmount) private {
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tHoldFee) = _getValues(tAmount);
         _rOwned[sender] = _rOwned[sender].sub(rAmount);
@@ -1328,7 +1328,7 @@ contract Nior is Context, IERC20, Ownable {
         emit Transfer(sender, recipient, tTransferAmount);
     }
 
-    //
+    // If neither sender and recipient are participating in tokenomics
     function _transferBothExcluded(address sender, address recipient, uint256 tAmount) private {
         (uint256 rAmount, uint256 rTransferAmount, uint256 rFee, uint256 tTransferAmount, uint256 tFee, uint256 tLiquidity, uint256 tHoldFee) = _getValues(tAmount);
         _tOwned[sender] = _tOwned[sender].sub(tAmount);
