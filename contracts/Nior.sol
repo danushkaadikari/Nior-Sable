@@ -1027,7 +1027,7 @@ contract Nior is Context, IERC20, Ownable {
     }
 
     function setMaxTxPercent(uint256 maxTxPercent) external onlyOwner() {
-        _maxTxAmount = _tTotal.mul(maxTxPercent).div(1000);
+        _maxTxAmount = _tTotal.mul(maxTxPercent).div(100);
     }
 
     function setSwapAndLiquifyEnabled(bool _enabled) public onlyOwner {
