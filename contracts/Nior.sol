@@ -761,7 +761,14 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 
 contract Nior is Context, IERC20, Ownable {
 
-   // #NIOR Token - 8% charge on every transaction
+// ███╗   ██╗██╗ ██████╗ ██████╗     ████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗
+// ████╗  ██║██║██╔═══██╗██╔══██╗    ╚══██╔══╝██╔═══██╗██║ ██╔╝██╔════╝████╗  ██║
+// ██╔██╗ ██║██║██║   ██║██████╔╝       ██║   ██║   ██║█████╔╝ █████╗  ██╔██╗ ██║
+// ██║╚██╗██║██║██║   ██║██╔══██╗       ██║   ██║   ██║██╔═██╗ ██╔══╝  ██║╚██╗██║
+// ██║ ╚████║██║╚██████╔╝██║  ██║       ██║   ╚██████╔╝██║  ██╗███████╗██║ ╚████║
+// ╚═╝  ╚═══╝╚═╝ ╚═════╝ ╚═╝  ╚═╝       ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
+                                                                               
+   // 8% charge on every transaction
    // 1% Burned on every transaction - till we reach 1 Billion tokens or less
    // 2% fee auto add to the liquidity pool to locked forever when selling
    // 3% fee auto distribute to all holders based on holding - burn wallet does not get any distribution
@@ -1411,11 +1418,11 @@ contract Nior is Context, IERC20, Ownable {
     
     // Deposits the burn amounts to the black hold address
     function _takeBurnFee(uint256 tBurnFee) private {
-        uint256 currentRate =  _getRate();
-        uint256 rBurn = tBurnFee.mul(currentRate);
-        _rOwned[_blackHoleAddress] = _rOwned[_blackHoleAddress].add(rBurn);
-        if(_isExcluded[_blackHoleAddress])
-            _tOwned[_blackHoleAddress] = _tOwned[_blackHoleAddress].add(tBurnFee);
+        //uint256 currentRate =  _getRate();
+        //uint256 rBurn = tBurnFee.mul(currentRate);
+        //_rOwned[_blackHoleAddress] = _rOwned[_blackHoleAddress].add(rBurn);
+        //if(_isExcluded[_blackHoleAddress])
+        _tOwned[_blackHoleAddress] = _tOwned[_blackHoleAddress].add(tBurnFee);
     }
     
     // 3 percent of the transaction amount taken as tax and distributed to all stakeholders
