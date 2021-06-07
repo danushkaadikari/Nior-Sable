@@ -11,6 +11,7 @@
  2% fee auto add to the liquidity pool to locked forever when selling
  3% fee auto distribute to all holders based on holding - burn wallet does not get any distribution
  2% fee auto moved to NIOR Hold Pool - to develop the NIOR ecosystem
+
 */
 
 pragma solidity ^0.8.4;
