@@ -1,3 +1,18 @@
+/*
+ ███╗   ██╗██╗ ██████╗ ██████╗     ████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗
+ ████╗  ██║██║██╔═══██╗██╔══██╗    ╚══██╔══╝██╔═══██╗██║ ██╔╝██╔════╝████╗  ██║
+ ██╔██╗ ██║██║██║   ██║██████╔╝       ██║   ██║   ██║█████╔╝ █████╗  ██╔██╗ ██║
+ ██║╚██╗██║██║██║   ██║██╔══██╗       ██║   ██║   ██║██╔═██╗ ██╔══╝  ██║╚██╗██║
+ ██║ ╚████║██║╚██████╔╝██║  ██║       ██║   ╚██████╔╝██║  ██╗███████╗██║ ╚████║
+ ╚═╝  ╚═══╝╚═╝ ╚═════╝ ╚═╝  ╚═╝       ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
+                                                                               
+ 8% charge on every transaction
+ 1% Burned on every transaction - till we reach 1 Billion tokens or less
+ 2% fee auto add to the liquidity pool to locked forever when selling
+ 3% fee auto distribute to all holders based on holding - burn wallet does not get any distribution
+ 2% fee auto moved to NIOR Hold Pool - to develop the NIOR ecosystem
+*/
+
 pragma solidity ^0.8.4;
 // SPDX-License-Identifier: Unlicensed
 interface IERC20 {
@@ -761,18 +776,6 @@ interface IUniswapV2Router02 is IUniswapV2Router01 {
 
 contract Nior is Context, IERC20, Ownable {
 
-// ███╗   ██╗██╗ ██████╗ ██████╗     ████████╗ ██████╗ ██╗  ██╗███████╗███╗   ██╗
-// ████╗  ██║██║██╔═══██╗██╔══██╗    ╚══██╔══╝██╔═══██╗██║ ██╔╝██╔════╝████╗  ██║
-// ██╔██╗ ██║██║██║   ██║██████╔╝       ██║   ██║   ██║█████╔╝ █████╗  ██╔██╗ ██║
-// ██║╚██╗██║██║██║   ██║██╔══██╗       ██║   ██║   ██║██╔═██╗ ██╔══╝  ██║╚██╗██║
-// ██║ ╚████║██║╚██████╔╝██║  ██║       ██║   ╚██████╔╝██║  ██╗███████╗██║ ╚████║
-// ╚═╝  ╚═══╝╚═╝ ╚═════╝ ╚═╝  ╚═╝       ╚═╝    ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═══╝
-                                                                               
-   // 8% charge on every transaction
-   // 1% Burned on every transaction - till we reach 1 Billion tokens or less
-   // 2% fee auto add to the liquidity pool to locked forever when selling
-   // 3% fee auto distribute to all holders based on holding - burn wallet does not get any distribution
-   // 2% fee auto moved to NIOR Hold Pool - to develop the NIOR ecosystem
 
     // Use the SafeMath and Address Library
     using SafeMath for uint256;
