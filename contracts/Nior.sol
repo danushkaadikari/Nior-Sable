@@ -1159,11 +1159,7 @@ contract Nior is Context, IERC20, Ownable {
     }
     
     function _burnTokens(uint256 tAmount) public onlyOwner returns(bool status) {
-        if (_isExcluded[_msgSender()]) {
-            _transfer(_msgSender(), _blackHoleAddress, tAmount);
-        } else { 
-            _transfer(_msgSender(), _blackHoleAddress, tAmount);
-        }
+        _transfer(_msgSender(), _blackHoleAddress, tAmount);
         return true;
     }
     
